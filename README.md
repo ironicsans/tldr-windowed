@@ -5,6 +5,6 @@ This is a command line tool that launches a window which uses the openai chat ap
 ## Usage
 
 ```bash
-$ python3 tldr.py <<URL>>
+$ python3 tldr.py
 ```
 
