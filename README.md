@@ -1,6 +1,6 @@
-# TLDR (command line)
+# TLDR (windowed version)
 
-This is a command line tool that launches a window which uses the openai chat api to summarize a webpage given a url.
+This is a tool that launches a window which uses the openai chat api to summarize a webpage given a url.
 
 ## Usage
 
