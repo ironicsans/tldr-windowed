@@ -3,20 +3,22 @@ import openai
 import os
 from bs4 import BeautifulSoup
 import requests
-from dotenv import load_dotenv
 import time
 import math
-
-load_dotenv()
+import tkinter as tk
 
 # Set up API key
-openai.api_key = os.getenv("OPENAI_API_KEY")
+openai.api_key = "OPENAI_API_KEY"
 
 
 def fetch_webpage(url):
-    response = requests.get(url)
-    response.raise_for_status()
-    return response.text
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        return response.text
+    except requests.exceptions.HTTPError as e:
+        print(f"Failed to fetch {url}: {e}")
+        raise
 
 
 def extract_main_text(html):
@@ -64,37 +66,49 @@ def get_elapsed_time(initial_time):
 
 
 def main():
-    start = time.time()
-    
-    if len(sys.argv) < 2:
-        print("Usage: python summarize.py <url>")
-        sys.exit(1)
+    def summarize_url():
+        url = url_entry.get()
+        try:
+            html = fetch_webpage(url)
+            main_text = extract_main_text(html)
+            text_chunks = split_text(main_text, 3000)
 
-    url = sys.argv[1]
-    try:
-        html = fetch_webpage(url)
-        main_text = extract_main_text(html)
-        text_chunks = split_text(main_text, 3000)
+            summaries = []
 
-        summaries = []
+            for count, chunk in enumerate(text_chunks):
+                s = summarize(chunk)
+                summaries.append(s)
 
-        print(f"Number of words: {len(main_text.split())}\n")
+            final_summary = summarize(' '.join(summaries))
 
-        for count, chunk in enumerate(text_chunks):
-            s = summarize(chunk)
-            print(f"***** summarized chunk {count+1} of {len(text_chunks)} at {get_elapsed_time(start)}s")
-            print(s + "\n")
-            summaries.append(s)
+            summary_text.delete('1.0', tk.END)
+            summary_text.insert(tk.END, final_summary)
+        
+        except Exception as e:
+            summary_text.delete('1.0', tk.END)
+            summary_text.insert(tk.END, f"Error: {e}")
 
-        final_summary = summarize(' '.join(summaries))
+    # Create window
+    window = tk.Tk()
+    window.title("URL Summarizer")
 
-        print(f"***** Cumulative summary for {url} at {get_elapsed_time(start)}s:")
-        print(final_summary)
-    
-    except Exception as e:
-        print(f"Error: {e}")
+    # Create URL entry
+    url_label = tk.Label(window, text="Enter URL:")
+    url_label.pack()
+    url_entry = tk.Entry(window, width=50)
+    url_entry.pack()
 
+    # Create summarize button
+    summarize_button = tk.Button(window, text="Summarize", command=summarize_url)
+    summarize_button.pack()
 
+    # Create summary text box
+    summary_label = tk.Label(window, text="Summary:")
+    summary_label.pack()
+    summary_text = tk.Text(window, wrap=tk.WORD, width=80, height=20)
+    summary_text.pack(fill=tk.BOTH, expand=True)
+
+    window.mainloop()
 
 if __name__ == "__main__":
     main()
